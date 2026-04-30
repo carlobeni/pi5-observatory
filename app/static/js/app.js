@@ -6,9 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const views = document.querySelectorAll('.view');
     const viewTitle = document.getElementById('view-title');
     
-    const statusCamera = document.getElementById('status-camera');
-    const statusCapture = document.getElementById('status-capture');
-    const statusHotspot = document.getElementById('status-hotspot');
+    const statusCameraCombined = document.getElementById('status-camera-combined');
     const statusInternet = document.getElementById('status-internet');
     
     const metricTemp = document.getElementById('metric-temp');
@@ -16,10 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoResolution = document.getElementById('video-resolution');
     const videoStream = document.getElementById('video-stream');
     const streamUrlText = document.getElementById('stream-url-text');
-    
-    const publicStreamCard = document.getElementById('public-stream-card');
-    const noInternetNote = document.getElementById('no-internet-note');
-    const publicUrlText = document.getElementById('public-url-text');
     
     const rangeExposure = document.getElementById('range-exposure');
     const valExposure = document.getElementById('val-exposure');
@@ -41,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnWifiCancel = document.getElementById('btn-wifi-cancel');
     const wifiPassDesc = document.getElementById('wifi-pass-desc');
 
-    const hsToggle = document.getElementById('hs-toggle');
     const hsSsid = document.getElementById('hs-ssid');
     const hsPass = document.getElementById('hs-pass');
     const toggleHsPass = document.getElementById('toggle-hs-pass');
@@ -57,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const authModalDesc = document.getElementById('auth-modal-desc');
     const networkWarning = document.getElementById('network-warning');
     const authError = document.getElementById('auth-error');
-    let authMode = 'save'; // 'save' or 'reveal'
+    let authMode = 'save';
 
     let currentCameraState = {
         max_width: 0,
@@ -85,6 +78,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function hideLoading() {
         loadingOverlay.classList.add('hidden');
+    }
+
+    function setBtnLoading(btn, isLoading, originalText) {
+        if (isLoading) {
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fas fa-circle-notch spin"></i> Procesando...`;
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
     }
 
     // Hamburger Menu Logic
@@ -137,13 +140,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentCameraState.is_capturing) {
             videoStream.classList.remove('signal-off');
             btnCameraToggle.classList.add('active');
-            statusCapture.textContent = 'REC';
-            statusCapture.className = 'status-pill status-on';
         } else {
             videoStream.classList.add('signal-off');
             btnCameraToggle.classList.remove('active');
-            statusCapture.textContent = 'IDLE';
-            statusCapture.className = 'status-pill status-off';
+        }
+
+        // Update Combined Status
+        if (!currentCameraState.connected) {
+            statusCameraCombined.textContent = 'DESCONECTADA';
+            statusCameraCombined.className = 'status-pill status-off';
+        } else if (currentCameraState.is_capturing) {
+            statusCameraCombined.textContent = 'TOMANDO IMAGEN';
+            statusCameraCombined.className = 'status-pill status-on';
+        } else {
+            statusCameraCombined.textContent = 'EN ESPERA';
+            statusCameraCombined.className = 'status-pill status-wait';
         }
     }
 
@@ -207,18 +218,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         connectedNetSection.classList.remove('hidden');
         connectedNetSection.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
                 <div style="display:flex; gap:1rem; align-items:center;">
                     <i class="fas fa-link" style="color:var(--accent-green); font-size:1.2rem;"></i>
                     <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                        <div style="display:flex; gap:0.5rem; align-items:center;">
-                            <span style="font-weight:600; font-size:1.1rem;">${ssid}</span>
+                        <span style="font-weight:600; font-size:1.1rem;">${ssid}</span>
+                        <div class="wifi-badge-container">
                             <span class="wifi-badge badge-connected">Conectado</span>
                             ${hasInternet ? 
                                 '<span class="wifi-badge badge-internet"><i class="fas fa-globe"></i> Internet OK</span>' : 
                                 '<span class="wifi-badge badge-offline"><i class="fas fa-times-circle"></i> Sin Internet</span>'}
                         </div>
-                        <span style="font-size:0.8rem; color:var(--text-gray);">Esta es tu conexión actual al observatorio.</span>
                     </div>
                 </div>
                 <button class="btn btn-secondary btn-sm" style="color:#ef4444; border-color:rgba(239, 68, 68, 0.3);" onclick="window.disconnectWifi()">
@@ -237,35 +247,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const wlan0 = statusData.interfaces.find(i => i.device === 'wlan0');
             const hasInternet = statusData.internet;
             connectedSsid = (wlan0 && wlan0.connection !== '--') ? wlan0.connection : null;
-            
             updateConnectedUI(connectedSsid, hasInternet);
 
             const resp = await fetch('/api/network/scan');
             const data = await resp.json();
             wifiList.innerHTML = '';
-            
             let ssids = new Set();
             if (connectedSsid) ssids.add(connectedSsid);
-
-            // Handle Available List
             const availableNetworks = data.filter(net => net.ssid && !ssids.has(net.ssid));
             availableNetworks.sort((a, b) => b.signal - a.signal);
-                
             if (availableNetworks.length === 0) {
                 wifiList.innerHTML = '<li class="text-gray" style="padding:1rem;text-align:center;">No hay otras redes detectadas.</li>';
             }
-            
             availableNetworks.forEach(net => {
                 const li = document.createElement('li');
                 li.className = 'wifi-item';
-                li.style.display = 'flex';
-                li.style.justifyContent = 'space-between';
-                li.style.alignItems = 'center';
-                li.style.padding = '0.75rem 1rem';
-                li.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-                
                 li.innerHTML = `
-                    <div style="display:flex; gap:1rem; align-items:center;">
+                    <div class="wifi-info">
                         <i class="fas fa-wifi" style="color:var(--text-gray);"></i>
                         <div style="display:flex; flex-direction:column; gap:0.2rem;">
                             <span style="font-weight:500;">${net.ssid}</span>
@@ -286,7 +284,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let targetSsid = '';
     window.connectToWifi = (ssid) => {
         targetSsid = ssid;
-        // Step 1: Admin Auth
         authMode = 'wifi-auth';
         authModalDesc.textContent = `Autorización requerida para cambiar a la red: ${ssid}`;
         networkWarning.classList.add('hidden');
@@ -312,23 +309,12 @@ document.addEventListener('DOMContentLoaded', () => {
         wifiPassModal.classList.add('hidden');
     });
 
-    // Enter support for both modals
-    adminPass.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') btnAuthConfirm.click();
-    });
-
-    wifiNetPass.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') btnWifiConfirm.click();
-    });
-
     btnWifiConfirm.addEventListener('click', async () => {
         const wPass = wifiNetPass.value;
         const wifiError = document.getElementById('wifi-auth-error');
+        const originalText = btnWifiConfirm.innerHTML;
         wifiError.classList.add('hidden');
-        
-        wifiPassModal.classList.add('hidden');
-        showLoading(`Conectando a ${targetSsid}...`);
-        
+        setBtnLoading(btnWifiConfirm, true);
         try {
             const resp = await fetch('/api/network/connect', {
                 method: 'POST',
@@ -336,31 +322,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ ssid: targetSsid, password: wPass })
             });
             if (resp.ok) {
+                wifiPassModal.classList.add('hidden');
                 alert('Conexión iniciada. El dispositivo se reconectará en breve.');
                 setTimeout(scanWifi, 5000);
-            } else {
-                hideLoading();
-                wifiPassModal.classList.remove('hidden');
-                wifiError.classList.remove('hidden');
-                return;
-            }
-        } catch (e) { 
-            hideLoading();
-            wifiPassModal.classList.remove('hidden');
-            wifiError.classList.remove('hidden');
-            return;
-        }
-        hideLoading();
+            } else { wifiError.classList.remove('hidden'); }
+        } catch (e) { wifiError.classList.remove('hidden'); }
+        setBtnLoading(btnWifiConfirm, false, originalText);
     });
 
-    // Password Visibility Toggle with Auth
     if (toggleHsPass) {
         toggleHsPass.onclick = (e) => {
             e.preventDefault();
-            e.stopPropagation();
-            
             if (hsPass.type === 'password') {
-                // Show modal to reveal
                 authMode = 'reveal';
                 authModalDesc.textContent = 'Introduce la contraseña de administrador para visualizar la clave actual.';
                 networkWarning.classList.add('hidden');
@@ -369,14 +342,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 adminPass.value = '';
                 adminPass.focus();
             } else {
-                // Hide if already visible
                 hsPass.type = 'password';
                 toggleHsPass.classList.replace('fa-eye-slash', 'fa-eye');
             }
         };
     }
 
-    // Save Hotspot Config (Show Modal)
     btnSaveHs.addEventListener('click', () => {
         authMode = 'save';
         authModalDesc.textContent = 'Introduce la contraseña de administrador para aplicar los cambios.';
@@ -391,102 +362,68 @@ document.addEventListener('DOMContentLoaded', () => {
         authModal.classList.add('hidden');
     });
 
-    // Support Enter key in modal
-    adminPass.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            btnAuthConfirm.click();
-        }
-    });
-
     btnAuthConfirm.addEventListener('click', async () => {
         const sudoPass = adminPass.value;
         if (!sudoPass) return;
+        const originalText = btnAuthConfirm.innerHTML;
+        setBtnLoading(btnAuthConfirm, true);
 
         if (authMode === 'reveal') {
-            console.log("[UI] Modo: REVELAR. Solicitando configuración segura...");
-            // Fetch real password with sudo
             try {
                 const resp = await fetch('/api/network/hotspot/config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ admin_password: sudoPass })
                 });
-                console.log("[UI] Respuesta del servidor (Revelar):", resp.status);
                 const data = await resp.json();
                 if (resp.ok) {
-                    console.log("[UI] Validación exitosa, revelando...");
                     hsPass.value = data.password;
                     hsPass.type = 'text';
                     toggleHsPass.classList.replace('fa-eye', 'fa-eye-slash');
                     authModal.classList.add('hidden');
                     authError.classList.add('hidden');
-                } else {
-                    console.warn("[UI] Validación fallida del servidor.");
-                    authError.classList.remove('hidden');
-                }
-            } catch (e) { console.error("[UI] Error en fetch (Revelar):", e); }
+                } else { authError.classList.remove('hidden'); }
+            } catch (e) { authError.classList.remove('hidden'); }
+            setBtnLoading(btnAuthConfirm, false, originalText);
             return;
         }
 
         if (authMode === 'wifi-auth') {
-            console.log("[UI] Modo: WIFI-AUTH. Validando administrador...");
             try {
                 const resp = await fetch('/api/network/verify-admin', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password: sudoPass })
                 });
-                
                 if (resp.ok) {
-                    console.log("[UI] Respuesta del servidor (WiFi-Auth): 200 OK");
                     authModal.classList.add('hidden');
-                    const wifiError = document.getElementById('wifi-auth-error');
-                    if(wifiError) wifiError.classList.add('hidden');
-                    
                     wifiPassDesc.textContent = `Introduce la contraseña para: ${targetSsid}`;
                     wifiPassModal.classList.remove('hidden');
                     wifiNetPass.value = '';
                     wifiNetPass.focus();
-                } else {
-                    authError.classList.remove('hidden');
-                }
-            } catch (e) { 
-                authError.classList.remove('hidden');
-            }
+                } else { authError.classList.remove('hidden'); }
+            } catch (e) { authError.classList.remove('hidden'); }
+            setBtnLoading(btnAuthConfirm, false, originalText);
             return;
         }
 
         if (authMode === 'wifi-disconnect') {
-            console.log("[UI] Modo: WIFI-DISCONNECT. Ejecutando...");
-            showLoading("Desconectando red actual...");
             try {
                 const resp = await fetch('/api/network/disconnect', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ password: sudoPass })
                 });
-                
-                hideLoading();
                 if (resp.ok) {
-                    console.log("[UI] Respuesta del servidor (WiFi-Disconnect): 200 OK");
                     authModal.classList.add('hidden');
                     alert('Dispositivo desconectado del WiFi.');
                     setTimeout(scanWifi, 1000);
-                } else {
-                    authError.classList.remove('hidden');
-                }
-            } catch (e) { 
-                hideLoading();
-                authError.classList.remove('hidden');
-            }
+                } else { authError.classList.remove('hidden'); }
+            } catch (e) { authError.classList.remove('hidden'); }
+            setBtnLoading(btnAuthConfirm, false, originalText);
             return;
         }
 
-        // Mode 'save'
-        console.log("[UI] Modo: GUARDAR. Aplicando nueva configuración...");
-        authModal.classList.add('hidden');
-        showLoading('Aplicando cambios de red (se interrumpirá la conexión)...');
-        
         try {
             const resp = await fetch('/api/network/hotspot', {
                 method: 'POST',
@@ -499,21 +436,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     admin_password: sudoPass
                 })
             });
-            console.log("[UI] Respuesta del servidor (Guardar):", resp.status);
-            const data = await resp.json();
             if (resp.ok) {
-                console.log("[UI] Cambios aplicados con éxito.");
                 alert('Configuración aplicada con éxito.');
+                authModal.classList.add('hidden');
                 authError.classList.add('hidden');
-            } else {
-                console.warn("[UI] Error al aplicar cambios:", data.detail);
-                authModal.classList.remove('hidden');
-                authError.classList.remove('hidden');
-            }
-        } catch (err) { 
-            console.error("[UI] Error en fetch (Guardar):", err);
-            alert('Conexión interrumpida. Vuelve a conectarte a la Pi tras unos segundos.'); 
-        }
+            } else { authError.classList.remove('hidden'); }
+        } catch (err) { alert('Conexión interrumpida. Vuelve a conectarte a la Pi.'); }
+        setBtnLoading(btnAuthConfirm, false, originalText);
         hideLoading();
     });
 
@@ -526,15 +455,12 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {}
     }
 
-    // Polling
     async function pollStatus() {
         try {
             const resp = await fetch('/api/camera/status');
             const data = await resp.json();
             currentCameraState.connected = data.connected;
             currentCameraState.is_capturing = data.is_capturing;
-            statusCamera.textContent = data.connected ? 'ON' : 'OFF';
-            statusCamera.className = data.connected ? 'status-pill status-on' : 'status-pill status-off';
             updateUIVisuals();
             metricTemp.textContent = `${data.temperature.toFixed(1)}°C`;
             metricFps.textContent = `${data.fps.toFixed(1)} FPS`;
@@ -552,31 +478,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const resp = await fetch('/api/network/status');
             const data = await resp.json();
             const wlan0 = data.interfaces.find(i => i.device === 'wlan0');
-            const ap0 = data.interfaces.find(i => i.device === 'ap0');
-            
             connectedSsid = (wlan0 && wlan0.connection !== '--') ? wlan0.connection : null;
             updateConnectedUI(connectedSsid, data.internet);
-            
-            const isHotspotActive = ap0 && ap0.state === 'up';
-            statusHotspot.textContent = isHotspotActive ? 'ACTIVE' : 'OFF';
-            statusHotspot.className = isHotspotActive ? 'status-pill status-on' : 'status-pill status-off';
-            hsToggle.checked = isHotspotActive;
-            
             statusInternet.textContent = data.internet ? 'ONLINE' : 'OFFLINE';
             statusInternet.className = data.internet ? 'status-pill status-on' : 'status-pill status-off';
-            
-            // Single local link
-            const localLink = `http://localhost:8000/api/camera/stream`;
-            streamUrlText.textContent = localLink;
-            streamUrlText.dataset.link = localLink;
-
-            // Global/Public link hidden by user request
-            publicStreamCard.classList.add('hidden');
-            noInternetNote.classList.add('hidden'); // Also hide the "no internet" warning since we disabled public stream
         } catch (e) {}
     }
 
-    // Fullscreen
     btnFullscreen.addEventListener('click', () => {
         if (!document.fullscreenElement) {
             mainVideoContainer.requestFullscreen();
@@ -587,18 +495,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Copy Links
-    document.getElementById('btn-copy-link').addEventListener('click', () => {
-        navigator.clipboard.writeText(streamUrlText.textContent);
-        alert('Enlace local copiado');
-    });
-
-    document.getElementById('btn-copy-public').addEventListener('click', () => {
-        navigator.clipboard.writeText(publicUrlText.textContent);
-        alert('Enlace público copiado');
-    });
-
-    // Start
     setInterval(pollStatus, 1500);
     setInterval(pollNetwork, 5000);
     setInterval(scanWifi, 30000);

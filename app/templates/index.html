@@ -9,11 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <!-- Hamburger Button for Mobile -->
-    <button class="hamburger" id="btn-hamburger">
-        <i class="fas fa-bars"></i>
-    </button>
-
     <!-- Global Loading Overlay -->
     <div id="loading-overlay" class="hidden">
         <div class="loader"></div>
@@ -24,24 +19,29 @@
     <div id="auth-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-user-shield"></i> Privilegios de Admin</h2>
+                <h2><i class="fas fa-user-shield"></i> Autorización</h2>
                 <p id="auth-modal-desc">Introduce la contraseña de administrador para proceder.</p>
             </div>
             <div class="modal-body">
-                <input type="password" id="admin-pass" placeholder="Sudo Password">
-                <p id="network-warning" class="help-note hidden" style="color:var(--text-gray); margin-top:0.5rem;">
-                    <i class="fas fa-exclamation-triangle"></i> Cambiar la red interrumpirá tu conexión actual.
-                </p>
-                <p id="internet-warning" class="help-note hidden" style="color:var(--danger); margin-top:0.5rem;">
-                    <i class="fas fa-exclamation-circle"></i> Perderás el acceso remoto al desconectar.
-                </p>
+                <input type="password" id="admin-pass" placeholder="Sudo Password" style="margin-bottom: 1rem;">
+                
+                <div id="network-warning" class="modal-note-box hidden">
+                    <i class="fas fa-info-circle"></i>
+                    <span><strong>Nota:</strong> Cambiar la red WiFi interrumpirá temporalmente la conexión del observatorio.</span>
+                </div>
+                
+                <div id="internet-warning" class="modal-note-box warning hidden">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span><strong>Atención:</strong> Al desconectar la red WiFi perderás el acceso remoto al visor global.</span>
+                </div>
+
                 <div id="auth-error" class="auth-error-msg hidden">
-                    <i class="fas fa-times-circle"></i> Contraseña incorrecta.
+                    <i class="fas fa-times-circle"></i> Contraseña incorrecta. Reintenta.
                 </div>
             </div>
             <div class="modal-actions">
-                <button class="btn btn-secondary" id="btn-auth-cancel">Cancelar</button>
                 <button class="btn btn-primary" id="btn-auth-confirm">Confirmar</button>
+                <button class="btn btn-secondary" id="btn-auth-cancel">Cancelar</button>
             </div>
         </div>
     </div>
@@ -50,18 +50,24 @@
     <div id="wifi-pass-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2><i class="fas fa-key"></i> Conectar a Red</h2>
-                <p id="wifi-pass-desc">Introduce la contraseña de la red WiFi.</p>
+                <h2><i class="fas fa-wifi"></i> Conexión Segura</h2>
+                <p id="wifi-pass-desc">Introduce la contraseña de la red seleccionada.</p>
             </div>
             <div class="modal-body">
-                <input type="password" id="wifi-net-pass" placeholder="WiFi Password">
+                <input type="password" id="wifi-net-pass" placeholder="WiFi Password" style="margin-bottom: 1rem;">
+                
+                <div class="modal-note-box">
+                    <i class="fas fa-shield-alt"></i>
+                    <span><strong>Seguridad:</strong> Tu contraseña se transmitirá de forma cifrada al gestor de red.</span>
+                </div>
+
                 <div id="wifi-auth-error" class="auth-error-msg hidden">
-                    <i class="fas fa-times-circle"></i> Error al conectar. Verifica la clave.
+                    <i class="fas fa-times-circle"></i> Error de conexión. Verifica la clave.
                 </div>
             </div>
             <div class="modal-actions">
-                <button class="btn btn-secondary" id="btn-wifi-cancel">Cancelar</button>
                 <button class="btn btn-primary" id="btn-wifi-confirm">Conectar</button>
+                <button class="btn btn-secondary" id="btn-wifi-cancel">Cancelar</button>
             </div>
         </div>
     </div>
@@ -89,20 +95,12 @@
             <div class="system-status">
                 <p class="section-note">Hardware Status</p>
                 <div class="status-item">
-                    <span class="label">Cámara SDK</span>
-                    <span id="status-camera" class="status-pill status-off">OFF</span>
+                    <span class="label">Cámara ASI</span>
+                    <span id="status-camera-combined" class="status-pill status-off">DESCONECTADA</span>
                 </div>
                 <div class="status-item">
-                    <span class="label">Captura</span>
-                    <span id="status-capture" class="status-pill status-off">IDLE</span>
-                </div>
-                <div class="status-item">
-                    <span class="label">Hotspot</span>
-                    <span id="status-hotspot" class="status-pill status-off">OFF</span>
-                </div>
-                <div class="status-item">
-                    <span class="label">Internet</span>
-                    <span id="status-internet" class="status-pill status-off">OFF</span>
+                    <span class="label">Conexión Internet</span>
+                    <span id="status-internet" class="status-pill status-off">OFFLINE</span>
                 </div>
             </div>
         </aside>
@@ -120,6 +118,9 @@
                         <i class="fas fa-bolt"></i>
                         <span id="metric-fps">-- FPS</span>
                     </div>
+                    <button class="hamburger" id="btn-hamburger">
+                        <i class="fas fa-bars"></i>
+                    </button>
                 </div>
             </header>
 
@@ -172,34 +173,6 @@
                                     <option value="loading">Cargando capacidades...</option>
                                 </select>
                             </div>
-                            <p class="help-note">El sensor se auto-configura al cambiar.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card glass">
-                    <h3><i class="fas fa-link"></i> Enlaces de Transmisión</h3>
-                    <div class="control-row">
-                        <div class="link-item">
-                            <p class="section-note">Acceso Local (LAN)</p>
-                            <div class="link-box">
-                                <code id="stream-url-text">http://localhost:8000/api/camera/stream</code>
-                                <button id="btn-copy-link"><i class="fas fa-copy"></i></button>
-                            </div>
-                        </div>
-                        
-                        <div id="public-stream-card" class="link-item hidden">
-                            <p class="section-note">Acceso Público (Mundo)</p>
-                            <div class="link-box" style="border-color: var(--accent-green);">
-                                <code id="public-url-text">http://detectando...</code>
-                                <button id="btn-copy-public"><i class="fas fa-copy"></i></button>
-                            </div>
-                        </div>
-
-                        <div id="no-internet-note" class="hidden">
-                            <p style="color: var(--danger); font-size: 0.8rem; margin-top: 0.5rem;">
-                                <i class="fas fa-wifi-slash"></i> Sin internet. Transmisión pública deshabilitada.
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -211,12 +184,9 @@
                     <div class="card glass">
                         <h3><i class="fas fa-satellite-dish"></i> Punto de Acceso (Hotspot)</h3>
                         <div class="control-row">
-                            <div class="switch-item">
-                                <span>Hotspot Activo</span>
-                                <label class="switch">
-                                    <input type="checkbox" id="hs-toggle">
-                                    <span class="slider"></span>
-                                </label>
+                            <div class="modal-note-box">
+                                <i class="fas fa-check-circle"></i>
+                                <span>El Hotspot está configurado como modo de rescate permanente.</span>
                             </div>
                             <div class="control-item">
                                 <label>SSID de la Red</label>
@@ -230,7 +200,7 @@
                                 </div>
                             </div>
                             <button class="btn btn-primary" id="btn-save-hs">
-                                <i class="fas fa-save"></i> Guardar Cambios
+                                <i class="fas fa-save"></i> Guardar Configuración
                             </button>
                         </div>
                     </div>
@@ -241,18 +211,17 @@
                             <small><button class="btn-sm btn-secondary" onclick="window.scanWifi()"><i class="fas fa-sync-alt"></i> Actualizar</button></small>
                         </h3>
                         
-                        <!-- Panel de Red Conectada -->
-                        <div id="connected-network-section" class="hidden">
-                            <!-- JS Populated -->
-                        </div>
+                        <div id="connected-network-section" class="hidden"></div>
 
                         <div class="wifi-list-container">
                             <div id="wifi-loader-panel" class="hidden">
-                                <i class="fas fa-circle-notch spin"></i> Buscando redes cercanas...
+                                <div class="wifi-search-animation">
+                                    <div></div><div></div><div></div>
+                                    <i class="fas fa-satellite-dish" style="z-index:1;"></i>
+                                </div>
+                                <span class="searching-text">Buscando redes...</span>
                             </div>
-                            <ul id="wifi-list" class="list">
-                                <!-- JS Populated -->
-                            </ul>
+                            <ul id="wifi-list" class="list"></ul>
                         </div>
                     </div>
                 </div>
@@ -263,9 +232,7 @@
                 <div class="card glass">
                     <h3>Manual del Sistema</h3>
                     <div class="help-content">
-                        <p><strong>Seguridad:</strong> Todas las operaciones críticas requieren contraseña de administrador.</p>
-                        <p><strong>Hotspot:</strong> La Pi 5 genera su propia red para acceso directo en campo.</p>
-                        <p><strong>WiFi:</strong> Puede conectar el observatorio a una red externa para habilitar la transmisión global.</p>
+                        <p><strong>Seguridad:</strong> El acceso a configuraciones críticas está protegido por contraseña sudo.</p>
                     </div>
                 </div>
             </section>
