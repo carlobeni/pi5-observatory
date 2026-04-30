@@ -1,0 +1,17 @@
+/* Local Inter Font */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 300 600;
+  font-display: swap;
+  src: url('/static/lib/fonts/inter.woff2') format('woff2');
+}
+
+/* Local Outfit Font */
+@font-face {
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 600 700;
+  font-display: swap;
+  src: url('/static/lib/fonts/outfit.woff2') format('woff2');
+}

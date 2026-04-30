@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PI5 Observatory | Pro Dashboard</title>
+    <!-- Local Fonts and Icons for offline/AP access -->
+    <link rel="stylesheet" href="/static/css/fonts.css">
+    <link rel="stylesheet" href="/static/lib/font-awesome/css/all.min.css">
+    
     <link rel="stylesheet" href="/static/css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <!-- Global Loading Overlay -->
@@ -25,6 +27,7 @@
             <div class="modal-body">
                 <input type="password" id="admin-pass" placeholder="Sudo Password" style="margin-bottom: 1rem;">
                 
+                <!-- Notes / Warnings -->
                 <div id="network-warning" class="modal-note-box hidden">
                     <i class="fas fa-info-circle"></i>
                     <span><strong>Nota:</strong> Cambiar la red WiFi interrumpirá temporalmente la conexión del observatorio.</span>
