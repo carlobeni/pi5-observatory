@@ -1,0 +1,34 @@
+# Pi5 Observatory Configuration
+
+camera:
+  device_index: 0
+  initial_exposure_us: 10000  # 10ms
+  initial_gain: 50
+  initial_bin: 1
+  initial_width: 640
+  initial_height: 480
+  image_type: 0 # ASI_IMG_RAW8
+  fps_target: 30
+  quality_jpeg: 80
+
+network:
+  hotspot:
+    ssid: "Pi5_Observatory"
+    password: "astrophotography"
+    interface: "wlan0"
+    gateway: "192.168.4.1"
+  uplink:
+    interface: "wlan0" # RPi5 can handle dual roles, but usually it's easier with separate ones if available
+    preferred_ssid: ""
+    preferred_password: ""
+
+streaming:
+  local_port: 8000
+  mode: "mjpeg" # or "websocket"
+  remote_enabled: false
+  remote_url: "wss://your-remote-server.com/publish"
+  remote_auth_key: "your-secret-key"
+
+system:
+  log_level: "INFO"
+  reconnect_interval: 5 # seconds

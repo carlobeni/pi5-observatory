@@ -1,0 +1,17 @@
+[Unit]
+Description=Pi5 Observatory Embedded System
+After=network.target
+
+[Service]
+Type=simple
+User=carlobeni
+WorkingDirectory=/home/carlobeni/tesis/pi5-observatory
+# Activate poetry environment and run
+ExecStart=/usr/bin/bash -c 'export PATH="/home/carlobeni/.local/bin:$PATH" && poetry run python -m app.main'
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/carlobeni/tesis/pi5-observatory/observatory.log
+StandardError=append:/home/carlobeni/tesis/pi5-observatory/observatory.log
+
+[Install]
+WantedBy=multi-user.target

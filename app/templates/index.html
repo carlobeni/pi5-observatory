@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PI5 Observatory | Pro Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Hamburger Button for Mobile -->
+    <button class="hamburger" id="btn-hamburger">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Global Loading Overlay -->
+    <div id="loading-overlay" class="hidden">
+        <div class="loader"></div>
+        <p id="loader-text">Sincronizando Sistema...</p>
+    </div>
+
+    <!-- MODAL: Administrador Sudo -->
+    <div id="auth-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-shield"></i> Privilegios de Admin</h2>
+                <p id="auth-modal-desc">Introduce la contraseña de administrador para proceder.</p>
+            </div>
+            <div class="modal-body">
+                <input type="password" id="admin-pass" placeholder="Sudo Password">
+                <p id="network-warning" class="help-note hidden" style="color:var(--text-gray); margin-top:0.5rem;">
+                    <i class="fas fa-exclamation-triangle"></i> Cambiar la red interrumpirá tu conexión actual.
+                </p>
+                <p id="internet-warning" class="help-note hidden" style="color:var(--danger); margin-top:0.5rem;">
+                    <i class="fas fa-exclamation-circle"></i> Perderás el acceso remoto al desconectar.
+                </p>
+                <div id="auth-error" class="auth-error-msg hidden">
+                    <i class="fas fa-times-circle"></i> Contraseña incorrecta.
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="btn-auth-cancel">Cancelar</button>
+                <button class="btn btn-primary" id="btn-auth-confirm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: WiFi Password -->
+    <div id="wifi-pass-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-key"></i> Conectar a Red</h2>
+                <p id="wifi-pass-desc">Introduce la contraseña de la red WiFi.</p>
+            </div>
+            <div class="modal-body">
+                <input type="password" id="wifi-net-pass" placeholder="WiFi Password">
+                <div id="wifi-auth-error" class="auth-error-msg hidden">
+                    <i class="fas fa-times-circle"></i> Error al conectar. Verifica la clave.
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="btn-wifi-cancel">Cancelar</button>
+                <button class="btn btn-primary" id="btn-wifi-confirm">Conectar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-microchip"></i>
+                <span>ASTRO PI5</span>
+            </div>
+            
+            <nav>
+                <button class="nav-btn active" data-target="dashboard-view">
+                    <i class="fas fa-tachometer-alt"></i> Visor ASI
+                </button>
+                <button class="nav-btn" data-target="network-view">
+                    <i class="fas fa-broadcast-tower"></i> Conectividad
+                </button>
+                <button class="nav-btn" data-target="info-view">
+                    <i class="fas fa-question-circle"></i> Información
+                </button>
+            </nav>
+
+            <div class="system-status">
+                <p class="section-note">Hardware Status</p>
+                <div class="status-item">
+                    <span class="label">Cámara SDK</span>
+                    <span id="status-camera" class="status-pill status-off">OFF</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Captura</span>
+                    <span id="status-capture" class="status-pill status-off">IDLE</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Hotspot</span>
+                    <span id="status-hotspot" class="status-pill status-off">OFF</span>
+                </div>
+                <div class="status-item">
+                    <span class="label">Internet</span>
+                    <span id="status-internet" class="status-pill status-off">OFF</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="content">
+            <header class="top-bar">
+                <h1 id="view-title">Visor en Tiempo Real</h1>
+                <div class="metrics">
+                    <div class="metric" title="Temperatura del Sensor">
+                        <i class="fas fa-temperature-low"></i>
+                        <span id="metric-temp">--°C</span>
+                    </div>
+                    <div class="metric" title="Velocidad de Captura">
+                        <i class="fas fa-bolt"></i>
+                        <span id="metric-fps">-- FPS</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- VIEW: DASHBOARD -->
+            <section id="dashboard-view" class="view active">
+                <div class="video-section">
+                    <div class="video-container" id="main-video-container">
+                        <img id="video-stream" src="/api/camera/stream" alt="Stream Off">
+                        <div class="video-overlay-top">
+                            <i class="fas fa-expand-arrows-alt"></i> <span id="video-resolution">Detectando...</span>
+                        </div>
+                        <div class="video-overlay-bottom">
+                            <button class="overlay-btn" id="btn-camera-toggle" title="Captura ON/OFF">
+                                <i class="fas fa-power-off"></i>
+                            </button>
+                            <button class="overlay-btn" id="btn-fullscreen" title="Pantalla Completa">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <div class="card glass">
+                        <h3><i class="fas fa-sliders-h"></i> Parámetros de Imagen</h3>
+                        <div class="control-row">
+                            <div class="control-item">
+                                <div class="control-header">
+                                    <span>Exposición</span>
+                                    <span id="val-exposure">--</span>
+                                </div>
+                                <input type="range" id="range-exposure" min="100" max="1000000" step="100" value="10000">
+                            </div>
+                            <div class="control-item">
+                                <div class="control-header">
+                                    <span>Ganancia (Gain)</span>
+                                    <span id="val-gain">--</span>
+                                </div>
+                                <input type="range" id="range-gain" min="0" max="500" step="1" value="50">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card glass">
+                        <h3><i class="fas fa-crop"></i> Resolución & ROI</h3>
+                        <div class="control-row">
+                            <div class="control-item">
+                                <label>Tamaño de Salida</label>
+                                <select id="select-resolution">
+                                    <option value="loading">Cargando capacidades...</option>
+                                </select>
+                            </div>
+                            <p class="help-note">El sensor se auto-configura al cambiar.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card glass">
+                    <h3><i class="fas fa-link"></i> Enlaces de Transmisión</h3>
+                    <div class="control-row">
+                        <div class="link-item">
+                            <p class="section-note">Acceso Local (LAN)</p>
+                            <div class="link-box">
+                                <code id="stream-url-text">http://localhost:8000/api/camera/stream</code>
+                                <button id="btn-copy-link"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+                        
+                        <div id="public-stream-card" class="link-item hidden">
+                            <p class="section-note">Acceso Público (Mundo)</p>
+                            <div class="link-box" style="border-color: var(--accent-green);">
+                                <code id="public-url-text">http://detectando...</code>
+                                <button id="btn-copy-public"><i class="fas fa-copy"></i></button>
+                            </div>
+                        </div>
+
+                        <div id="no-internet-note" class="hidden">
+                            <p style="color: var(--danger); font-size: 0.8rem; margin-top: 0.5rem;">
+                                <i class="fas fa-wifi-slash"></i> Sin internet. Transmisión pública deshabilitada.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: NETWORK -->
+            <section id="network-view" class="view">
+                <div class="grid">
+                    <div class="card glass">
+                        <h3><i class="fas fa-satellite-dish"></i> Punto de Acceso (Hotspot)</h3>
+                        <div class="control-row">
+                            <div class="switch-item">
+                                <span>Hotspot Activo</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="hs-toggle">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-item">
+                                <label>SSID de la Red</label>
+                                <input type="text" id="hs-ssid" value="Pi5_Observatory">
+                            </div>
+                            <div class="control-item">
+                                <label>Contraseña</label>
+                                <div class="password-container">
+                                    <input type="password" id="hs-pass" value="astrophotography">
+                                    <i class="fas fa-eye password-toggle" id="toggle-hs-pass"></i>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" id="btn-save-hs">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card glass">
+                        <h3>
+                            <i class="fas fa-network-wired"></i> Gestión WiFi
+                            <small><button class="btn-sm btn-secondary" onclick="window.scanWifi()"><i class="fas fa-sync-alt"></i> Actualizar</button></small>
+                        </h3>
+                        
+                        <!-- Panel de Red Conectada -->
+                        <div id="connected-network-section" class="hidden">
+                            <!-- JS Populated -->
+                        </div>
+
+                        <div class="wifi-list-container">
+                            <div id="wifi-loader-panel" class="hidden">
+                                <i class="fas fa-circle-notch spin"></i> Buscando redes cercanas...
+                            </div>
+                            <ul id="wifi-list" class="list">
+                                <!-- JS Populated -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: INFO -->
+            <section id="info-view" class="view">
+                <div class="card glass">
+                    <h3>Manual del Sistema</h3>
+                    <div class="help-content">
+                        <p><strong>Seguridad:</strong> Todas las operaciones críticas requieren contraseña de administrador.</p>
+                        <p><strong>Hotspot:</strong> La Pi 5 genera su propia red para acceso directo en campo.</p>
+                        <p><strong>WiFi:</strong> Puede conectar el observatorio a una red externa para habilitar la transmisión global.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
