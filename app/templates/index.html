@@ -110,11 +110,11 @@
             <header class="top-bar">
                 <h1 id="view-title">Visor en Tiempo Real</h1>
                 <div class="metrics">
-                    <div class="metric" title="Temperatura del Sensor">
+                    <div class="metric" id="metric-temp-container" title="Temperatura del Sensor">
                         <i class="fas fa-temperature-low"></i>
                         <span id="metric-temp">--°C</span>
                     </div>
-                    <div class="metric" title="Velocidad de Captura">
+                    <div class="metric" id="metric-fps-container" title="Velocidad de Captura">
                         <i class="fas fa-bolt"></i>
                         <span id="metric-fps">-- FPS</span>
                     </div>
@@ -128,10 +128,21 @@
             <section id="dashboard-view" class="view active">
                 <div class="video-section">
                     <div class="video-container" id="main-video-container">
-                        <img id="video-stream" src="/api/camera/stream" alt="Stream Off">
-                        <div class="video-overlay-top">
-                            <i class="fas fa-expand-arrows-alt"></i> <span id="video-resolution">Detectando...</span>
+                        <!-- Stream Image -->
+                        <img id="video-stream" src="/api/camera/stream" alt="Stream Off" class="signal-off">
+                        
+                        <!-- Permanent Video Loader (Visible when not capturing) -->
+                        <div id="video-loader" class="video-loader">
+                            <i class="fas fa-circle-notch spin"></i>
+                            <span id="video-loader-text">Sensor en Espera</span>
                         </div>
+
+                        <!-- Overlays (Always on top) -->
+                        <div class="video-overlay-top">
+                            <i class="fas fa-broadcast-tower" id="icon-transmitting" style="margin-right:0.5rem; color:var(--text-gray);"></i>
+                            <span id="video-resolution">Detectando...</span>
+                        </div>
+
                         <div class="video-overlay-bottom">
                             <button class="overlay-btn" id="btn-camera-toggle" title="Captura ON/OFF">
                                 <i class="fas fa-power-off"></i>

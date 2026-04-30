@@ -11,9 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const metricTemp = document.getElementById('metric-temp');
     const metricFps = document.getElementById('metric-fps');
+    const metricTempContainer = document.getElementById('metric-temp-container');
+    const metricFpsContainer = document.getElementById('metric-fps-container');
+    
     const videoResolution = document.getElementById('video-resolution');
     const videoStream = document.getElementById('video-stream');
-    const streamUrlText = document.getElementById('stream-url-text');
+    const videoLoader = document.getElementById('video-loader');
+    const videoLoaderText = document.getElementById('video-loader-text');
+    const iconTransmitting = document.getElementById('icon-transmitting');
     
     const rangeExposure = document.getElementById('range-exposure');
     const valExposure = document.getElementById('val-exposure');
@@ -137,24 +142,40 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function updateUIVisuals() {
-        if (currentCameraState.is_capturing) {
-            videoStream.classList.remove('signal-off');
-            btnCameraToggle.classList.add('active');
-        } else {
-            videoStream.classList.add('signal-off');
-            btnCameraToggle.classList.remove('active');
-        }
-
-        // Update Combined Status
+        // Combined Status
         if (!currentCameraState.connected) {
             statusCameraCombined.textContent = 'DESCONECTADA';
             statusCameraCombined.className = 'status-pill status-off';
-        } else if (currentCameraState.is_capturing) {
-            statusCameraCombined.textContent = 'TOMANDO IMAGEN';
-            statusCameraCombined.className = 'status-pill status-on';
+            videoLoaderText.textContent = 'Cámara Desconectada';
+            videoLoader.classList.remove('hidden');
+            videoStream.classList.add('signal-off');
+            iconTransmitting.style.color = 'var(--text-gray)';
+            metricTempContainer.style.display = 'none';
+            metricFpsContainer.style.display = 'none';
         } else {
-            statusCameraCombined.textContent = 'EN ESPERA';
-            statusCameraCombined.className = 'status-pill status-wait';
+            metricTempContainer.style.display = 'flex';
+            metricFpsContainer.style.display = 'flex';
+            
+            if (currentCameraState.is_capturing) {
+                statusCameraCombined.textContent = 'TOMANDO IMAGEN';
+                statusCameraCombined.className = 'status-pill status-on';
+                videoLoader.classList.add('hidden');
+                videoStream.classList.remove('signal-off');
+                iconTransmitting.style.color = 'var(--accent-green)';
+            } else {
+                statusCameraCombined.textContent = 'EN ESPERA';
+                statusCameraCombined.className = 'status-pill status-wait';
+                videoLoaderText.textContent = 'Sensor en Espera';
+                videoLoader.classList.remove('hidden');
+                videoStream.classList.add('signal-off');
+                iconTransmitting.style.color = 'var(--text-gray)';
+            }
+        }
+
+        if (currentCameraState.is_capturing) {
+            btnCameraToggle.classList.add('active');
+        } else {
+            btnCameraToggle.classList.remove('active');
         }
     }
 
@@ -248,7 +269,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const hasInternet = statusData.internet;
             connectedSsid = (wlan0 && wlan0.connection !== '--') ? wlan0.connection : null;
             updateConnectedUI(connectedSsid, hasInternet);
-
             const resp = await fetch('/api/network/scan');
             const data = await resp.json();
             wifiList.innerHTML = '';
@@ -367,7 +387,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!sudoPass) return;
         const originalText = btnAuthConfirm.innerHTML;
         setBtnLoading(btnAuthConfirm, true);
-
         if (authMode === 'reveal') {
             try {
                 const resp = await fetch('/api/network/hotspot/config', {
@@ -387,7 +406,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setBtnLoading(btnAuthConfirm, false, originalText);
             return;
         }
-
         if (authMode === 'wifi-auth') {
             try {
                 const resp = await fetch('/api/network/verify-admin', {
@@ -406,7 +424,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setBtnLoading(btnAuthConfirm, false, originalText);
             return;
         }
-
         if (authMode === 'wifi-disconnect') {
             try {
                 const resp = await fetch('/api/network/disconnect', {
@@ -423,7 +440,6 @@ document.addEventListener('DOMContentLoaded', () => {
             setBtnLoading(btnAuthConfirm, false, originalText);
             return;
         }
-
         try {
             const resp = await fetch('/api/network/hotspot', {
                 method: 'POST',
@@ -462,13 +478,15 @@ document.addEventListener('DOMContentLoaded', () => {
             currentCameraState.connected = data.connected;
             currentCameraState.is_capturing = data.is_capturing;
             updateUIVisuals();
-            metricTemp.textContent = `${data.temperature.toFixed(1)}°C`;
-            metricFps.textContent = `${data.fps.toFixed(1)} FPS`;
-            videoResolution.textContent = `${data.width} x ${data.height}`;
-            if (data.max_width > 0 && !initialPropertiesLoaded) {
-                currentCameraState.max_width = data.max_width;
-                currentCameraState.max_height = data.max_height;
-                updateResolutionOptions(data.max_width, data.max_height);
+            if (data.connected) {
+                metricTemp.textContent = `${data.temperature.toFixed(1)}°C`;
+                metricFps.textContent = `${data.fps.toFixed(1)} FPS`;
+                videoResolution.textContent = `${data.width} x ${data.height}`;
+                if (data.max_width > 0 && !initialPropertiesLoaded) {
+                    currentCameraState.max_width = data.max_width;
+                    currentCameraState.max_height = data.max_height;
+                    updateResolutionOptions(data.max_width, data.max_height);
+                }
             }
         } catch (e) {}
     }
