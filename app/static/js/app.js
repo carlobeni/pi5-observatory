@@ -87,6 +87,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     elements.btnSaveHs.addEventListener('click', () => {
+        const pass = elements.hsPass.value;
+        if (pass.length < 8) {
+            alert('La contraseña del Hotspot debe tener al menos 8 caracteres por requisitos de seguridad WPA2.');
+            elements.hsPass.focus();
+            return;
+        }
         openAuthModal('save', 'Introduce la contraseña de administrador para aplicar los cambios.');
     });
 
@@ -96,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.wifiAuthError.classList.add('hidden');
         setBtnLoading(elements.btnWifiConfirm, true);
         try {
-            const resp = await networkService.connect(state.targetSsid, wPass);
+            const resp = await networkService.connect(state.targetSsid, wPass, state.adminPassword);
             if (resp.ok) {
                 elements.wifiPassModal.classList.add('hidden');
                 alert('Conexión iniciada. El dispositivo se reconectará en breve.');
@@ -127,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const resp = await networkService.verifyAdmin(sudoPass);
                 if (resp.ok) {
+                    state.adminPassword = sudoPass;
                     elements.authModal.classList.add('hidden');
                     elements.wifiPassDesc.textContent = `Introduce la contraseña para: ${state.targetSsid}`;
                     elements.wifiPassModal.classList.remove('hidden');
@@ -187,13 +194,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const wlan0 = data.interfaces.find(i => i.device === 'wlan0');
             state.connectedSsid = (wlan0 && wlan0.connection !== '--') ? wlan0.connection : null;
             updateConnectedUI(state.connectedSsid, data.internet);
-            elements.statusInternet.textContent = data.internet ? 'ONLINE' : 'OFFLINE';
-            elements.statusInternet.className = data.internet ? 'status-pill status-on' : 'status-pill status-off';
+            
+            // Update Internet Status
+            if (elements.statusInternet) {
+                elements.statusInternet.textContent = data.internet ? 'ONLINE' : 'OFFLINE';
+                elements.statusInternet.className = data.internet ? 'status-pill status-on' : 'status-pill status-off';
+            }
+            if (elements.dotInternet) {
+                elements.dotInternet.className = data.internet ? 'status-dot status-on' : 'status-dot status-off';
+                if (elements.iconStatusInternet) elements.iconStatusInternet.style.color = data.internet ? 'var(--accent-green)' : 'var(--text-gray)';
+            }
             
             // Update Hotspot Status
             if (elements.statusHotspot) {
                 elements.statusHotspot.textContent = data.hotspot_active ? 'ON' : 'OFF';
                 elements.statusHotspot.className = data.hotspot_active ? 'status-pill status-on' : 'status-pill status-off';
+            }
+            if (elements.dotHotspot) {
+                elements.dotHotspot.className = data.hotspot_active ? 'status-dot status-on' : 'status-dot status-off';
+                if (elements.iconStatusHotspot) elements.iconStatusHotspot.style.color = data.hotspot_active ? 'var(--accent-green)' : 'var(--text-gray)';
             }
         } catch (e) { }
     }

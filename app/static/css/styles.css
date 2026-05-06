@@ -20,8 +20,11 @@ body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-dark);
     color: var(--text-white);
-    overflow-x: hidden;
+    overflow: hidden; /* Prevents body scroll, use .content instead */
     line-height: 1.5;
+    height: 100vh;
+    height: 100dvh; /* Better for mobile */
+    width: 100vw;
 }
 
 h1, h2, h3 {
@@ -130,6 +133,45 @@ nav {
 .status-on { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); border-color: var(--accent-green); }
 .status-off { background: rgba(0, 0, 0, 0.05); color: var(--text-gray); border-color: var(--glass-border); }
 .status-wait { background: rgba(245, 158, 11, 0.15); color: var(--warning-yellow); border-color: var(--warning-yellow); }
+
+/* Mini Status for Top Bar */
+.system-status-mini {
+    display: flex;
+    gap: 1.25rem;
+    padding: 0.5rem 1rem;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 1rem;
+    border: 1px solid var(--glass-border);
+}
+
+.status-dot-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: var(--text-gray);
+}
+
+.status-dot {
+    position: absolute;
+    top: -2px;
+    right: -6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid var(--bg-card);
+}
+
+.status-dot.status-on { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+.status-dot.status-off { background: var(--text-gray); }
+.status-dot.status-wait { background: var(--warning-yellow); animation: pulse 1s infinite; }
+
+@keyframes pulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
 
 /* Main Content */
 .content {
@@ -638,15 +680,32 @@ input[type="range"]::-webkit-slider-thumb {
     .sidebar { 
         width: 280px; 
         height: 100vh;
+        height: 100dvh;
         position: fixed;
         left: -300px;
         z-index: 2001;
+        padding-top: env(safe-area-inset-top, 2rem);
     }
     .sidebar.open { left: 0; }
-    .content { padding: 1rem; height: 100vh; overflow-y: auto; }
+    .content { 
+        padding: 1rem; 
+        padding-top: env(safe-area-inset-top, 1rem);
+        height: 100vh; 
+        height: 100dvh;
+        overflow-y: auto; 
+    }
     .main-video-container { min-height: 250px; aspect-ratio: 4 / 3; }
     .snapshot-preview-container { padding: 1rem; }
     .snapshot-header { flex-direction: column; gap: 1rem; height: auto; padding: 1rem; }
+    
+    .system-status-mini {
+        gap: 0.75rem;
+        padding: 0.4rem 0.75rem;
+    }
+    .top-bar h1 {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
 }
 
 @media (max-width: 480px) {

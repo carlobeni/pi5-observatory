@@ -8,5 +8,6 @@ export const state = {
     connectedSsid: null,
     initialPropertiesLoaded: false,
     authMode: 'save',
-    targetSsid: ''
+    targetSsid: '',
+    adminPassword: null
 };

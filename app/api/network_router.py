@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from app.modules.network.network_manager import NetworkManager
 from pydantic import BaseModel
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 nm = NetworkManager()
@@ -19,6 +22,7 @@ class ConnectRequest(BaseModel):
     ssid: str
     password: str = None
     interface: str = "wlan0"
+    admin_password: str = None
 
 class HotspotRequest(BaseModel):
     ssid: str
@@ -36,8 +40,11 @@ async def get_status():
             import urllib.request
             # Use a short timeout to avoid blocking the API
             public_ip = urllib.request.urlopen('https://api.ipify.org', timeout=2).read().decode('utf8')
+            logger.info(f"[INTERNET] OK: Online | IP: {public_ip}")
         except:
-            pass
+            logger.info("[INTERNET] OK: Online | IP: No detectada")
+    else:
+        logger.warning("[INTERNET] ERR: Offline")
 
     return {
         "interfaces": nm.get_interfaces(),
@@ -53,7 +60,7 @@ async def scan_wifi(interface: str = "wlan0"):
 
 @router.post("/connect")
 async def connect_wifi(req: ConnectRequest):
-    success = nm.connect_wifi(req.ssid, req.password, req.interface)
+    success = nm.connect_wifi(req.ssid, req.password, req.interface, req.admin_password)
     if success:
         return {"status": "ok", "message": f"Connected to {req.ssid}"}
     raise HTTPException(status_code=400, detail="Failed to connect")

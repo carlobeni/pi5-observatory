@@ -11,8 +11,14 @@ export function updateCameraVisuals() {
     } = elements;
 
     if (!currentCameraState.connected) {
-        statusCameraCombined.textContent = 'DESCONECTADA';
-        statusCameraCombined.className = 'status-pill status-off';
+        if (statusCameraCombined) {
+            statusCameraCombined.textContent = 'DESCONECTADA';
+            statusCameraCombined.className = 'status-pill status-off';
+        }
+        if (elements.dotCamera) {
+            elements.dotCamera.className = 'status-dot status-off';
+            if (elements.iconStatusCamera) elements.iconStatusCamera.style.color = 'var(--text-gray)';
+        }
         videoLoaderText.textContent = 'Cámara Desconectada';
         videoLoader.classList.remove('hidden');
         videoStream.classList.add('signal-off');
@@ -28,15 +34,27 @@ export function updateCameraVisuals() {
         if (elements.videoOverlayControlsLeft) elements.videoOverlayControlsLeft.style.pointerEvents = 'auto';
         
         if (currentCameraState.is_capturing) {
-            statusCameraCombined.textContent = 'TOMANDO IMAGEN';
-            statusCameraCombined.className = 'status-pill status-on';
+            if (statusCameraCombined) {
+                statusCameraCombined.textContent = 'TOMANDO IMAGEN';
+                statusCameraCombined.className = 'status-pill status-on';
+            }
+            if (elements.dotCamera) {
+                elements.dotCamera.className = 'status-dot status-on';
+                if (elements.iconStatusCamera) elements.iconStatusCamera.style.color = 'var(--accent-green)';
+            }
             videoLoader.classList.add('hidden');
             videoStream.classList.remove('signal-off');
             iconTransmitting.style.color = 'var(--accent-green)';
             if (elements.btnSnapshot) elements.btnSnapshot.disabled = false;
         } else {
-            statusCameraCombined.textContent = 'EN ESPERA';
-            statusCameraCombined.className = 'status-pill status-wait';
+            if (statusCameraCombined) {
+                statusCameraCombined.textContent = 'EN ESPERA';
+                statusCameraCombined.className = 'status-pill status-wait';
+            }
+            if (elements.dotCamera) {
+                elements.dotCamera.className = 'status-dot status-wait';
+                if (elements.iconStatusCamera) elements.iconStatusCamera.style.color = 'var(--warning-yellow)';
+            }
             videoLoaderText.textContent = 'Sensor en Espera';
             videoLoader.classList.remove('hidden');
             videoStream.classList.add('signal-off');

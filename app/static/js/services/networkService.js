@@ -9,11 +9,11 @@ export const networkService = {
         return await resp.json();
     },
     
-    async connect(ssid, password) {
+    async connect(ssid, password, admin_password = null) {
         return await fetch('/api/network/connect', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ssid, password })
+            body: JSON.stringify({ ssid, password, admin_password })
         });
     },
     

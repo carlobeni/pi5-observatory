@@ -22,9 +22,9 @@ class CameraManager:
             # Try common paths for the SDK library
             lib_path = os.environ.get("ZWO_ASI_LIB", "/usr/local/lib/libASICamera2.so")
             asi.init(lib_path)
-            logger.info("ZWO ASI SDK initialized successfully.")
+            logger.info("[CAMERA] OK: SDK ZWO ASI inicializado.")
         except Exception as e:
-            logger.error(f"Failed to initialize ZWO ASI SDK: {e}")
+            logger.error(f"[CAMERA] ERR: Falló inicialización del SDK: {e}")
             raise
 
     def get_detected_cameras(self):
@@ -34,20 +34,19 @@ class CameraManager:
         try:
             num_cameras = self.get_detected_cameras()
             if num_cameras == 0:
-                logger.warning("No cameras detected.")
+                logger.warning("[CAMERA] ERR: No se detectaron cámaras ZWO.")
                 return False
 
             idx = self.config["camera"]["device_index"]
-            logger.info(f"Connecting to camera index {idx}...")
             self.camera = asi.Camera(idx)
             self.properties = self.camera.get_camera_property()
-            logger.info(f"Camera properties fetched: {self.properties.get('Name')} ({self.properties.get('MaxWidth')}x{self.properties.get('MaxHeight')})")
+            logger.info(f"[CAMERA] OK: Conectado a {self.properties.get('Name')}")
             
             # Apply initial settings
             self.apply_settings(self.config["camera"])
             return True
         except Exception as e:
-            logger.error(f"Error connecting to camera: {e}")
+            logger.error(f"[CAMERA] ERR: Error al conectar: {e}")
             return False
 
     def apply_settings(self, settings):
@@ -84,13 +83,13 @@ class CameraManager:
             try:
                 self.camera.start_video_capture()
                 self.is_capturing = True
-                logger.info("Video capture started.")
+                logger.info("[CAMERA] OK: Captura de video iniciada.")
                 return True
             except Exception as e:
                 if "video mode has been started" in str(e).lower():
                     self.is_capturing = True
                     return True
-                logger.error(f"Failed to start video capture: {e}")
+                logger.error(f"[CAMERA] ERR: Falló inicio de captura: {e}")
                 return False
         return False
 

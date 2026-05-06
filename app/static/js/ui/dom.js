@@ -8,6 +8,12 @@ export const elements = {
     statusCameraCombined: document.getElementById('status-camera-combined'),
     statusInternet: document.getElementById('status-internet'),
     statusHotspot: document.getElementById('status-hotspot'),
+    dotCamera: document.getElementById('dot-camera'),
+    dotInternet: document.getElementById('dot-internet'),
+    dotHotspot: document.getElementById('dot-hotspot'),
+    iconStatusCamera: document.getElementById('icon-status-camera'),
+    iconStatusInternet: document.getElementById('icon-status-internet'),
+    iconStatusHotspot: document.getElementById('icon-status-hotspot'),
 
     metricTemp: document.getElementById('metric-temp'),
     metricFps: document.getElementById('metric-fps'),

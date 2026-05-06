@@ -4,11 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PI5 Observatory | Pro Dashboard</title>
+    <title>ASTRO PI5</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#f8fafc">
+    
     <!-- Local Fonts and Icons for offline/AP access -->
     <link rel="stylesheet" href="/static/css/fonts.css">
     <link rel="stylesheet" href="/static/lib/font-awesome/css/all.min.css">
-
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 
@@ -100,21 +103,7 @@
                 </button>
             </nav>
 
-            <div class="system-status">
-                <p class="section-note">Hardware Status</p>
-                <div class="status-item">
-                    <span class="label">Cámara ASI</span>
-                    <span id="status-camera-combined" class="status-pill status-off">DESCONECTADA</span>
-                </div>
-                <div class="status-item">
-                    <span class="label">Conexión Internet</span>
-                    <span id="status-internet" class="status-pill status-off">OFFLINE</span>
-                </div>
-                <div class="status-item">
-                    <span class="label">Hotspot / Zona Wifi</span>
-                    <span id="status-hotspot" class="status-pill status-off">OFF</span>
-                </div>
-            </div>
+            </nav>
         </aside>
 
         <!-- Main Content Area -->
@@ -122,6 +111,20 @@
             <header class="top-bar">
                 <h1 id="view-title">Visor en Tiempo Real</h1>
                 <div class="metrics">
+                    <div class="system-status-mini">
+                        <div class="status-dot-container" title="Cámara ASI">
+                            <i class="fas fa-camera" id="icon-status-camera"></i>
+                            <span id="dot-camera" class="status-dot status-off"></span>
+                        </div>
+                        <div class="status-dot-container" title="Internet">
+                            <i class="fas fa-globe" id="icon-status-internet"></i>
+                            <span id="dot-internet" class="status-dot status-off"></span>
+                        </div>
+                        <div class="status-dot-container" title="Zona WiFi">
+                            <i class="fas fa-broadcast-tower" id="icon-status-hotspot"></i>
+                            <span id="dot-hotspot" class="status-dot status-off"></span>
+                        </div>
+                    </div>
                     <button class="hamburger" id="btn-hamburger">
                         <i class="fas fa-bars"></i>
                     </button>
@@ -243,6 +246,9 @@
                                     <input type="password" id="hs-pass" value="astrophotography">
                                     <i class="fas fa-eye password-toggle" id="toggle-hs-pass"></i>
                                 </div>
+                                <small style="color:var(--text-gray); font-size:0.75rem; margin-top:0.3rem; display:block;">
+                                    <i class="fas fa-info-circle"></i> Mínimo 8 caracteres (Requisito WPA2).
+                                </small>
                             </div>
                             <button class="btn btn-primary" id="btn-save-hs">
                                 <i class="fas fa-save"></i> Guardar Configuración

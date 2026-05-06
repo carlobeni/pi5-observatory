@@ -1,17 +1,18 @@
 [Unit]
-Description=Pi5 Observatory Embedded System
-After=network.target
+Description=Pi5 Observatory Dashboard
+After=network.target network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
-User=carlobeni
+User=root
 WorkingDirectory=/home/carlobeni/tesis/pi5-observatory
-# Activate poetry environment and run
-ExecStart=/usr/bin/bash -c 'export PATH="/home/carlobeni/.local/bin:$PATH" && poetry run python -m app.main'
+Environment=PYTHONPATH=/home/carlobeni/tesis/pi5-observatory
+ExecStart=/home/carlobeni/.cache/pypoetry/virtualenvs/zwo-camera-test-WMouhAc9-py3.12/bin/python -m app.main
 Restart=always
 RestartSec=5
-StandardOutput=append:/home/carlobeni/tesis/pi5-observatory/observatory.log
-StandardError=append:/home/carlobeni/tesis/pi5-observatory/observatory.log
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
