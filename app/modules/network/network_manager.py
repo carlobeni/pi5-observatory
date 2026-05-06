@@ -188,6 +188,15 @@ class NetworkManager:
             self._run_command(["systemctl", "stop", "dnsmasq"], admin_password)
             return True
 
+    def is_hotspot_active(self):
+        # Check if hostapd service is active
+        try:
+            # We don't use self._run_command because it logs errors on non-zero exit codes
+            result = subprocess.run(["systemctl", "is-active", "hostapd"], capture_output=True, text=True)
+            return result.stdout.strip() == "active"
+        except Exception:
+            return False
+
     def get_current_connection_details(self, interface="wlan0"):
         output = self._run_command(["nmcli", "-t", "-f", "IP4.ADDRESS,IP4.GATEWAY", "device", "show", interface])
         if not output:

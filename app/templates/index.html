@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,9 +8,10 @@
     <!-- Local Fonts and Icons for offline/AP access -->
     <link rel="stylesheet" href="/static/css/fonts.css">
     <link rel="stylesheet" href="/static/lib/font-awesome/css/all.min.css">
-    
+
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
+
 <body>
     <!-- Global Loading Overlay -->
     <div id="loading-overlay" class="hidden">
@@ -26,16 +28,18 @@
             </div>
             <div class="modal-body">
                 <input type="password" id="admin-pass" placeholder="Sudo Password" style="margin-bottom: 1rem;">
-                
+
                 <!-- Notes / Warnings -->
                 <div id="network-warning" class="modal-note-box hidden">
                     <i class="fas fa-info-circle"></i>
-                    <span><strong>Nota:</strong> Cambiar la red WiFi interrumpirá temporalmente la conexión del observatorio.</span>
+                    <span><strong>Nota:</strong> Cambiar la red WiFi interrumpirá temporalmente la conexión del
+                        observatorio.</span>
                 </div>
-                
+
                 <div id="internet-warning" class="modal-note-box warning hidden">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <span><strong>Atención:</strong> Al desconectar la red WiFi perderás el acceso remoto al visor global.</span>
+                    <span><strong>Atención:</strong> Al desconectar la red WiFi perderás el acceso remoto al visor
+                        global.</span>
                 </div>
 
                 <div id="auth-error" class="auth-error-msg hidden">
@@ -58,10 +62,11 @@
             </div>
             <div class="modal-body">
                 <input type="password" id="wifi-net-pass" placeholder="WiFi Password" style="margin-bottom: 1rem;">
-                
+
                 <div class="modal-note-box">
                     <i class="fas fa-shield-alt"></i>
-                    <span><strong>Seguridad:</strong> Tu contraseña se transmitirá de forma cifrada al gestor de red.</span>
+                    <span><strong>Seguridad:</strong> Tu contraseña se transmitirá de forma cifrada al gestor de
+                        red.</span>
                 </div>
 
                 <div id="wifi-auth-error" class="auth-error-msg hidden">
@@ -82,7 +87,7 @@
                 <i class="fas fa-microchip"></i>
                 <span>ASTRO PI5</span>
             </div>
-            
+
             <nav>
                 <button class="nav-btn active" data-target="dashboard-view">
                     <i class="fas fa-tachometer-alt"></i> Visor ASI
@@ -105,6 +110,10 @@
                     <span class="label">Conexión Internet</span>
                     <span id="status-internet" class="status-pill status-off">OFFLINE</span>
                 </div>
+                <div class="status-item">
+                    <span class="label">Hotspot / Zona Wifi</span>
+                    <span id="status-hotspot" class="status-pill status-off">OFF</span>
+                </div>
             </div>
         </aside>
 
@@ -113,14 +122,6 @@
             <header class="top-bar">
                 <h1 id="view-title">Visor en Tiempo Real</h1>
                 <div class="metrics">
-                    <div class="metric" id="metric-temp-container" title="Temperatura del Sensor">
-                        <i class="fas fa-temperature-low"></i>
-                        <span id="metric-temp">--°C</span>
-                    </div>
-                    <div class="metric" id="metric-fps-container" title="Velocidad de Captura">
-                        <i class="fas fa-bolt"></i>
-                        <span id="metric-fps">-- FPS</span>
-                    </div>
                     <button class="hamburger" id="btn-hamburger">
                         <i class="fas fa-bars"></i>
                     </button>
@@ -133,7 +134,7 @@
                     <div class="video-container" id="main-video-container">
                         <!-- Stream Image -->
                         <img id="video-stream" src="/api/camera/stream" alt="Stream Off" class="signal-off">
-                        
+
                         <!-- Permanent Video Loader (Visible when not capturing) -->
                         <div id="video-loader" class="video-loader">
                             <i class="fas fa-circle-notch spin"></i>
@@ -141,12 +142,45 @@
                         </div>
 
                         <!-- Overlays (Always on top) -->
-                        <div class="video-overlay-top">
-                            <i class="fas fa-broadcast-tower" id="icon-transmitting" style="margin-right:0.5rem; color:var(--text-gray);"></i>
-                            <span id="video-resolution">Detectando...</span>
+                        <div class="video-overlay-top-left">
+                            <i class="fas fa-broadcast-tower" id="icon-transmitting"
+                                style="margin-right:0.5rem; color:rgba(255,255,255,0.6);"></i>
+                            <span id="video-resolution" style="color: white;">Detectando...</span>
                         </div>
 
-                        <div class="video-overlay-bottom">
+                        <div class="video-overlay-top-right">
+                            <div class="monitor-metric" id="metric-temp-container" style="color: white;">
+                                <i class="fas fa-temperature-low"></i>
+                                <span id="metric-temp">--°C</span>
+                            </div>
+                            <div class="monitor-metric" id="metric-fps-container" style="color: white;">
+                                <i class="fas fa-bolt"></i>
+                                <span id="metric-fps">-- FPS</span>
+                            </div>
+                        </div>
+
+                        <div class="video-overlay-controls-left">
+                            <div class="monitor-control">
+                                <div class="control-header">
+                                    <span>EXP</span>
+                                    <span id="val-exposure">--</span>
+                                </div>
+                                <input type="range" id="range-exposure" min="100" max="1000000" step="100"
+                                    value="10000">
+                            </div>
+                            <div class="monitor-control">
+                                <div class="control-header">
+                                    <span>GAIN</span>
+                                    <span id="val-gain">--</span>
+                                </div>
+                                <input type="range" id="range-gain" min="0" max="500" step="1" value="50">
+                            </div>
+                        </div>
+
+                        <div class="video-overlay-bottom-right">
+                            <button class="overlay-btn" id="btn-snapshot" title="Capturar Imagen" disabled>
+                                <i class="fas fa-camera"></i>
+                            </button>
                             <button class="overlay-btn" id="btn-camera-toggle" title="Captura ON/OFF">
                                 <i class="fas fa-power-off"></i>
                             </button>
@@ -154,41 +188,38 @@
                                 <i class="fas fa-expand"></i>
                             </button>
                         </div>
+
+                        <!-- MODAL: Snapshot Preview Overlay (Moved inside for Fullscreen support) -->
+                        <div id="snapshot-overlay" class="modal-overlay hidden"
+                            style="background: rgba(0,0,0,0.95); position: absolute; z-index: 100;">
+                            <div class="snapshot-preview-container">
+                                <div class="snapshot-header">
+                                    <h2 style="color: var(--accent-green);"><i class="fas fa-image"></i> Captura
+                                        Realizada</h2>
+                                    <div class="snapshot-actions">
+                                        <button class="btn btn-secondary" id="btn-snapshot-close">
+                                            <i class="fas fa-times"></i> Salir
+                                        </button>
+                                        <button class="btn btn-secondary" id="btn-snapshot-download">
+                                            <i class="fas fa-download"></i> Descargar
+                                        </button>
+                                        <button class="btn btn-primary" id="btn-snapshot-upload">
+                                            <i class="fas fa-cloud-upload-alt"></i> Guardar en Cloud
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="snapshot-body">
+                                    <img id="snapshot-img" src="" alt="Snapshot Preview">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="grid">
-                    <div class="card glass">
-                        <h3><i class="fas fa-sliders-h"></i> Parámetros de Imagen</h3>
-                        <div class="control-row">
-                            <div class="control-item">
-                                <div class="control-header">
-                                    <span>Exposición</span>
-                                    <span id="val-exposure">--</span>
-                                </div>
-                                <input type="range" id="range-exposure" min="100" max="1000000" step="100" value="10000">
-                            </div>
-                            <div class="control-item">
-                                <div class="control-header">
-                                    <span>Ganancia (Gain)</span>
-                                    <span id="val-gain">--</span>
-                                </div>
-                                <input type="range" id="range-gain" min="0" max="500" step="1" value="50">
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="card glass">
-                        <h3><i class="fas fa-crop"></i> Resolución & ROI</h3>
-                        <div class="control-row">
-                            <div class="control-item">
-                                <label>Tamaño de Salida</label>
-                                <select id="select-resolution">
-                                    <option value="loading">Cargando capacidades...</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+
+
                 </div>
             </section>
 
@@ -222,15 +253,18 @@
                     <div class="card glass">
                         <h3>
                             <i class="fas fa-network-wired"></i> Gestión WiFi
-                            <small><button class="btn-sm btn-secondary" onclick="window.scanWifi()"><i class="fas fa-sync-alt"></i> Actualizar</button></small>
+                            <small><button class="btn-sm btn-secondary" onclick="window.scanWifi()"><i
+                                        class="fas fa-sync-alt"></i> Actualizar</button></small>
                         </h3>
-                        
+
                         <div id="connected-network-section" class="hidden"></div>
 
                         <div class="wifi-list-container">
                             <div id="wifi-loader-panel" class="hidden">
                                 <div class="wifi-search-animation">
-                                    <div></div><div></div><div></div>
+                                    <div></div>
+                                    <div></div>
+                                    <div></div>
                                     <i class="fas fa-satellite-dish" style="z-index:1;"></i>
                                 </div>
                                 <span class="searching-text">Buscando redes...</span>
@@ -246,13 +280,17 @@
                 <div class="card glass">
                     <h3>Manual del Sistema</h3>
                     <div class="help-content">
-                        <p><strong>Seguridad:</strong> El acceso a configuraciones críticas está protegido por contraseña sudo.</p>
+                        <p><strong>Seguridad:</strong> El acceso a configuraciones críticas está protegido por
+                            contraseña sudo.</p>
                     </div>
                 </div>
             </section>
         </main>
     </div>
 
-    <script src="/static/js/app.js"></script>
+    </div>
+
+    <script type="module" src="/static/js/app.js"></script>
 </body>
+
 </html>

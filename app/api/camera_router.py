@@ -1,5 +1,5 @@
 import cv2
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Response, Request
 from fastapi.responses import StreamingResponse
 from app.core.frame_buffer import frame_buffer
 import time
@@ -65,17 +65,31 @@ async def get_remote_status():
 
 @router.post("/toggle")
 async def toggle_capture(enable: bool):
+    from app.main import logger
     from app.core.instances import camera_manager, camera_worker
+    logger.info(f"Petición de TOGGLE recibida: enable={enable}")
     if not camera_manager.camera:
+        logger.warning("Intento de toggle sin cámara conectada")
         return {"status": "error", "message": "Cámara no conectada"}
     
     camera_worker.user_enabled = enable
     
     if enable:
-        # Worker will see user_enabled=True and start capture
-        return {"status": "ok", "capturing": True}
+        logger.info("Forzando reinicio de captura...")
+        try:
+            camera_manager.stop_capture()
+            time.sleep(0.2)
+            if camera_manager.start_capture():
+                camera_worker._capture_started = True
+                return {"status": "ok", "capturing": True}
+            else:
+                return {"status": "error", "message": "No se pudo iniciar la captura"}
+        except Exception as e:
+            logger.error(f"Error forzando captura: {e}")
+            return {"status": "error", "message": str(e)}
     else:
-        # Worker will see user_enabled=False and stop capture
+        logger.info("Deteniendo captura...")
+        camera_worker.user_enabled = False
         camera_manager.stop_capture()
         camera_worker._capture_started = False
         return {"status": "ok", "capturing": False}
@@ -117,3 +131,93 @@ async def set_control(control: str, value: int):
         camera_manager.set_control(mapping[control], value)
         return {"status": "ok", "control": control, "value": value}
     return {"status": "error", "message": "Unknown control"}
+
+@router.post("/snapshot/save")
+async def save_snapshot(request: Request):
+    try:
+        from app.core.supabase_client import supabase, bucket_name
+        from app.main import logger
+        
+        if not supabase:
+            logger.error("Supabase client not initialized")
+            return {"status": "error", "message": "Supabase no está configurado"}
+
+        data = await request.json()
+        image_data = data.get("image") # base64 string
+        if not image_data:
+            return {"status": "error", "message": "No image data provided"}
+        
+        # Clean base64 data
+        if "," in image_data:
+            image_data = image_data.split(",")[1]
+        
+        import base64
+        import uuid
+        from datetime import datetime
+        
+        try:
+            img_bytes = base64.b64decode(image_data)
+        except Exception as e:
+            return {"status": "error", "message": f"Error decoding image: {e}"}
+        
+        # Generate names
+        now = datetime.now()
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
+        file_id = str(uuid.uuid4())[:8]
+        file_name = f"obs_{timestamp}_{file_id}.jpg"
+        storage_path = f"images/{file_name}"
+        
+        # Get current camera parameters for metadata
+        from app.core.instances import camera_manager
+        from app.core.frame_buffer import frame_buffer
+        
+        cam_config = camera_manager.config.get("camera", {})
+        frame_meta = frame_buffer.get_metadata()
+        
+        metadata = {
+            "app": "pi5-observatory",
+            "version": "1.0",
+            "camera_settings": {
+                "exposure_us": cam_config.get("initial_exposure_us"),
+                "gain": cam_config.get("initial_gain"),
+                "bin": cam_config.get("initial_bin"),
+                "width": cam_config.get("initial_width"),
+                "height": cam_config.get("initial_height")
+            },
+            "sensor_data": {
+                "temperature": frame_meta.get("temperature"),
+                "fps": frame_meta.get("fps")
+            }
+        }
+        
+        # 1. Upload to Storage
+        logger.info(f"Uploading {file_name} to Supabase Storage bucket '{bucket_name}' in 'images/' folder...")
+        try:
+            supabase.storage.from_(bucket_name).upload(
+                path=storage_path,
+                file=img_bytes,
+                file_options={"content-type": "image/jpeg"}
+            )
+        except Exception as e:
+            logger.error(f"Storage upload failed: {e}")
+            return {"status": "error", "message": f"Error en Storage: {str(e)}"}
+            
+        # 2. Insert to Database
+        logger.info(f"Inserting record for {file_name} into live_captures table...")
+        try:
+            supabase.table("live_captures").insert({
+                "file_name": file_name,
+                "storage_bucket": bucket_name,
+                "storage_path": storage_path,
+                "obs_datetime": now.isoformat(),
+                "metadata_json": metadata
+            }).execute()
+        except Exception as e:
+            logger.error(f"Database insert failed: {e}")
+            return {"status": "error", "message": f"Error en Base de Datos: {str(e)}"}
+        
+        logger.info(f"Snapshot {file_name} saved successfully.")
+        return {"status": "ok", "message": "Imagen guardada en Supabase con éxito"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+

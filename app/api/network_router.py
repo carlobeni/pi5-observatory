@@ -43,7 +43,8 @@ async def get_status():
         "interfaces": nm.get_interfaces(),
         "details": nm.get_current_connection_details(),
         "internet": internet,
-        "public_ip": public_ip
+        "public_ip": public_ip,
+        "hotspot_active": nm.is_hotspot_active()
     }
 
 @router.get("/scan")
