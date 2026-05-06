@@ -2,10 +2,12 @@
 __pycache__/
 *.pyc
 .venv/
+poetry.lock
+scratch/
+brain/
+implementation_plan.md
+task.md
+walkthrough.md
+node_modules/
 dist/
-build/
-*.egg-info/
-.pytest_cache/
-.coverage
-htmlcov/
 .DS_Store

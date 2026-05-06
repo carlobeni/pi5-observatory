@@ -177,8 +177,8 @@ class NetworkManager:
                 except Exception as e:
                     logger.error(f"Failed to update hostapd.conf: {e}")
 
-            # Ensure the interface exists first
-            self._run_command(["systemctl", "start", "wifi-ap.service"], admin_password)
+            # Ensure the interface is recreated with correct settings
+            self._run_command(["systemctl", "restart", "wifi-ap.service"], admin_password)
             # Start/Restart services
             self._run_command(["systemctl", "restart", "hostapd"], admin_password)
             self._run_command(["systemctl", "restart", "dnsmasq"], admin_password)
