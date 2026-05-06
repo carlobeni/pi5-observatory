@@ -4,7 +4,9 @@ import socket
 import logging
 import subprocess
 import os
+import datetime
 from PIL import Image, ImageDraw, ImageFont
+
 try:
     from luma.oled.device import ssd1306
     from luma.core.interface.serial import i2c
@@ -22,6 +24,9 @@ class OLEDManager:
         self.device = None
         self.running = False
         self.thread = None
+        self.boot_complete = False
+        self.message_ticker = "INICIALIZANDO..."
+        self.has_internet = False
         
         if not LUMA_AVAILABLE:
             logger.error("[OLED] Librerías luma.oled no encontradas.")
@@ -40,6 +45,24 @@ class OLEDManager:
                 logger.info("[OLED] Pantalla inicializada correctamente en 0x3D.")
             except Exception as e2:
                 logger.error(f"[OLED] Error final inicializando pantalla: {e2}")
+        
+        if self.device:
+            self._show_boot_screen()
+
+    def _show_boot_screen(self):
+        """Muestra una pantalla de carga inicial elegante."""
+        try:
+            for i in range(5):
+                with canvas(self.device) as draw:
+                    # Fondo Nokia style (borde)
+                    draw.rectangle((0, 0, 127, 63), outline="white")
+                    draw.text((35, 20), "ASTRO PI5", fill="white")
+                    # Barra de carga animada
+                    w = (i + 1) * 20
+                    draw.rectangle((14, 40, 14 + w, 45), fill="white")
+                time.sleep(0.3)
+        except:
+            pass
 
     def start(self):
         if self.device and not self.running:
@@ -103,35 +126,61 @@ class OLEDManager:
         except:
             return "--°C"
 
+    def _check_internet(self):
+        """Verifica si hay acceso real a internet."""
+        try:
+            socket.setdefaulttimeout(1)
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(("8.8.8.8", 53))
+            return True
+        except:
+            return False
+
     def _update_loop(self):
+        last_heavy_poll = 0
+        cached_ip = "..."
+        cached_temp = "--°C"
+        
         while self.running:
             try:
-                ip = self._get_ip()
-                temp = self._get_temp()
-                
-                cam_status = "DISC"
+                now = time.time()
+                # Poll pesado cada 5 segundos
+                if now - last_heavy_poll > 5.0:
+                    cached_ip = self._get_ip()
+                    cached_temp = self._get_temp()
+                    self.has_internet = self._check_internet()
+                    last_heavy_poll = now
+
+                # Obtener estado de cámara y red
+                cam_status = "OFF"
                 if self.camera_manager:
                     if self.camera_manager.camera:
                         cam_status = "BUSY" if self.camera_manager.is_capturing else "IDLE"
-                    else:
-                        cam_status = "OFF"
                 
                 ap_status = "DOWN"
                 if self.network_manager and self.network_manager.is_hotspot_active():
                     ap_status = "UP"
 
+                curr_time = datetime.datetime.now().strftime("%H:%M")
+                curr_date = datetime.datetime.now().strftime("%d/%m")
+
                 with canvas(self.device) as draw:
-                    # Título centrado
-                    draw.text((30, 0), "ASTRO PI5", fill="white")
+                    # Título y Reloj (Compacto)
+                    draw.text((0, 0), "ASTRO PI5", fill="white")
+                    draw.text((68, 0), f"{curr_date} {curr_time}", fill="white")
                     draw.line((0, 12, 128, 12), fill="white")
                     
                     # IP
                     self._draw_icons(draw, 0, 16, "ip")
-                    draw.text((15, 16), f"IP: {ip}", fill="white")
+                    draw.text((15, 16), f"IP: {cached_ip}", fill="white")
+                    
+                    # Internet Status
+                    icon_net = "ON" if self.has_internet else "OFF"
+                    draw.text((0, 28), "NET:", fill="white")
+                    draw.text((35, 28), icon_net, fill="white")
                     
                     # WiFi Zone
-                    self._draw_icons(draw, 0, 28, "wifi")
-                    draw.text((15, 28), f"ZONE: {ap_status}", fill="white")
+                    self._draw_icons(draw, 70, 28, "wifi")
+                    draw.text((85, 28), ap_status, fill="white")
                     
                     # Camera
                     self._draw_icons(draw, 0, 40, "cam")
@@ -139,9 +188,15 @@ class OLEDManager:
                     
                     # CPU
                     self._draw_icons(draw, 0, 52, "cpu")
-                    draw.text((15, 52), f"CPU:  {temp}", fill="white")
+                    draw.text((15, 52), f"CPU:  {cached_temp}", fill="white")
                     
-                time.sleep(3)
+                time.sleep(2)
             except Exception as e:
                 logger.error(f"[OLED] Error en loop: {e}")
                 time.sleep(5)
+
+    def set_message(self, text):
+        # En esta versión simple no usamos el ticker, pero mantenemos el método por compatibilidad
+        self.message_ticker = text.upper()
+
+

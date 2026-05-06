@@ -28,6 +28,7 @@ async def lifespan(app: FastAPI):
     # Start OLED Display
     logger.info("Starting OLEDManager...")
     oled_manager.start()
+    oled_manager.set_message("SISTEMA ONLINE")
     
     # Auto-activate Hotspot on run
     try:
@@ -40,6 +41,7 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown
     logger.info("Stopping OLEDManager...")
+    oled_manager.set_message("APAGANDO...")
     oled_manager.stop()
     
     logger.info("Stopping CameraWorker...")

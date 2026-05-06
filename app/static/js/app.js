@@ -235,14 +235,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const li = document.createElement('li');
                 li.className = 'wifi-item';
                 li.innerHTML = `
-                    <div class="wifi-info">
-                        <i class="fas fa-wifi" style="color:var(--text-gray);"></i>
+                    <div class="wifi-info" style="display:flex; align-items:center; gap:1rem; flex:1;">
+                        <div class="wifi-icon-box" style="background:var(--accent-green-glow); padding:0.6rem; border-radius:0.75rem; color:var(--accent-green);">
+                            <i class="fas fa-wifi"></i>
+                        </div>
                         <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                            <span style="font-weight:500;">${net.ssid}</span>
-                            <span style="font-size:0.75rem; color:var(--text-gray);">${net.signal}% señal</span>
+                            <span style="font-weight:600; font-size:1rem;">${net.ssid}</span>
+                            <span style="font-size:0.75rem; color:var(--text-gray);">
+                                <i class="fas fa-signal" style="font-size:0.7rem; margin-right:0.3rem;"></i>${net.signal}%
+                            </span>
                         </div>
                     </div>
-                    <button class="btn btn-primary btn-sm">Conectar</button>
+                    <button class="btn btn-primary btn-sm" style="margin-left:auto;">Conectar</button>
                 `;
                 li.querySelector('button').onclick = () => window.connectToWifi(net.ssid);
                 elements.wifiList.appendChild(li);
