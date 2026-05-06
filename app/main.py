@@ -13,8 +13,7 @@ from fastapi.responses import RedirectResponse, Response
 
 # Load environment variables
 load_dotenv()
-from app.core.instances import camera_manager, camera_worker
-from app.modules.network.network_manager import NetworkManager
+from app.core.instances import camera_manager, camera_worker, network_manager, oled_manager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -26,17 +25,23 @@ async def lifespan(app: FastAPI):
     logger.info("Starting CameraWorker...")
     camera_worker.start()
     
+    # Start OLED Display
+    logger.info("Starting OLEDManager...")
+    oled_manager.start()
+    
     # Auto-activate Hotspot on run
     try:
         logger.info("[STARTUP] Activando Zona WiFi automáticamente...")
-        nm = NetworkManager()
         # No password needed if running as service/root
-        nm.manage_hotspot(action="up")
+        network_manager.manage_hotspot(action="up")
     except Exception as e:
         logger.error(f"[STARTUP] Error iniciando Hotspot: {e}")
         
     yield
     # Shutdown
+    logger.info("Stopping OLEDManager...")
+    oled_manager.stop()
+    
     logger.info("Stopping CameraWorker...")
     camera_worker.stop()
     camera_worker.join(timeout=2)

@@ -23,7 +23,7 @@ network:
     preferred_password: ""
 
 streaming:
-  local_port: 80
+  local_port: 8000
   mode: "mjpeg" # or "websocket"
   remote_enabled: false
   remote_url: "wss://your-remote-server.com/publish"
